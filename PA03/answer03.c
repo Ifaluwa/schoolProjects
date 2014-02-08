@@ -25,7 +25,7 @@ if (*dest == NULL || src_len + dest_len + 1 >= *n)
 
 char * * explode(const char * str, const char * delims, int * arrLen);
 {
-
+does it work
 
 
 
