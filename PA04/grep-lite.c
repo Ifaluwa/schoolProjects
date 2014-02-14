@@ -3,6 +3,10 @@
 #include<string.h>
 #define TRUE 1
 #define FALSE 0
+#define ERROR 2
+#define BUFFER_SIZE 2048
+
+
 void printHelp()
 {
 	printf("Usage: grep-lite [OPTION]... PATTERN\n"
@@ -21,30 +25,58 @@ void printHelp()
 
 int main(int argc, char * * argv)
 {
-	
-	//PRINTS HELP
 	int i;
-        for(i = 1; i < argc; i++)
+	int showHelp = FALSE;
+	int invertMatch = FALSE;
+	int lineNumber = FALSE;
+	int quiet = FALSE;
+	const char *pattern = argv[argc - 1];
+	
+	for(i = 1; i < argc - 1; i++)
         {
-        if(strcmp(argv[i], "--help") == 0)
-                {
-                        printHelp();
-                        return EXIT_SUCCESS;
-                }
+	#define ARGCMP(S) (strcmp(argv[i], S) == 0)
+        if(ARGCMP("--help")) showHelp = TRUE;
+        else if(ARGCMP("--invert-match")) invertMatch = TRUE;
+	else if(ARGCMP("--line-number")) lineNumber = TRUE;
+	else if(ARGCMP("--quiet")) quiet = TRUE;
+	else if(ARGCMP("-v")) invertMatch = TRUE;
+	else if(ARGCMP("-n")) lineNumber = TRUE;
+	else if(ARGCMP("-q")) quiet = TRUE;
+	else{
+	fprintf(stderr, "error!\n");
+	return ERROR;
+	    }
+	#undef ARGCMP
         }
 
-	//CHECK FOR BOGUS COMMANDS
-	for(i = 1; i < argc - 1; i++)
+	if(showHelp || (strcmp(pattern, "--help") == 0))
 	{
-	if(strcmp(argv[i], "-v") == 0) return TRUE;
-	else if(strcmp(argv[i], "-n") == 0) return TRUE;
-	else if(strcmp(argv[i], "-q") == 0) return TRUE;
-	else if(argv[i][0] == "-")
-		{
-			fprintf(stderr, "Error! Bogus Command line arguments!" argv[i]);
-			 return 2;
-		}
-	else funcdefault  = TRUE
+		printHelp();
+		return EXIT_SUCCESS;
 	}
-	
+	if (argc == 1)	
+	{
+		fprintf(stderr, "error!\n");
+		return ERROR;
+	}
+
+	char buffer[BUFFER_SIZE];
+	int found = FALSE;
+	int currLine = 0;
+	while(fgets(buffer, BUFFER_SIZE, stdin) != NULL)
+	{
+		currLine++;
+		int matches = strstr(buffer, pattern) != NULL;
+		if((matches && !invertMatch) || (!matches && invertMatch))
+			{
+				found = TRUE;
+			        if(!quiet) 
+				{
+					if(lineNumber) printf("%d:", currLine);
+					printf("%s", buffer);	
+				}
+			}
+	}
+
+	return found ? 0 : 1;
 }

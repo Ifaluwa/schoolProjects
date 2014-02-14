@@ -3,6 +3,7 @@
 #include<string.h>
 #define TRUE 1
 #define FALSE 0
+
 void printHelp()
 {
 	printf("Usage: cat-lite [--help] [FILE]...\n"
@@ -29,12 +30,22 @@ int catFile(const char *filename, FILE *fout)
 		fputc(ch, fout);
 	}
 	
-	if(!isStdin) fclise(fin);
+	if(!isStdin) fclose(fin);
 	return TRUE;
 }
 
 int main(int argc, char * * argv)
 {
+	//NO INPUT ARGUMENT
+	if(argc ==1)
+	{
+	     catFile("-", stdout);
+	return EXIT_SUCCESS;
+	}
+
+
+
+	//CHECK FOR HELP FLAG
 	int i;
 	for(i = 1; i < argc; i++)
 	{
@@ -44,6 +55,8 @@ int main(int argc, char * * argv)
 			return EXIT_SUCCESS;
 		}
 	}
+
+	//CONCATENATES FILE
 	for(i  = 1; i < argc; i++)
 	{
 	if (catFile(argv[i], stdout) == FALSE)
