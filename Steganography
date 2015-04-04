@@ -1,0 +1,118 @@
+__author__ = 'ee364g07'
+import base64
+from PIL import Image
+import re
+from numpy import array
+
+class Message:
+    types = ['Text', 'GrayImage', 'ColorImage']
+
+    def __init__(self, **kwargs):
+        if len(kwargs.keys()) == 2:
+            if kwargs.get('messageType') in self.types:
+                self.messageType = kwargs.get('messageType')
+            else:
+                raise ValueError("Wrong message type!")
+            self.filePath = kwargs.get("filePath")
+            self.XmlString = self.getXmlString()
+        else:
+            self.XmlString = kwargs.get("XmlString")
+            self.messageType = self.messagetype()
+
+
+    def messagetype(self):
+        str = self.XmlString
+        pat = r'<message type ="(.*?) size'
+        match = re.search(pat, str)
+        return match.group()
+
+    def text2xml(self):
+        with open(self.filePath, 'r') as file:
+            content = file.read()
+        encoded = base64.b64encode(bytes(content, "UTF-8"))
+        return "<?xml version=""1.0"" encoding=""UTF-8""?>\n<message type=""{2}"" size=""{0}"" encrypted=""False"">\n {1}\n</message>".format(len(content), encoded, self.messageType)
+
+    def image2xml(self):
+        im = Image.open(self.filePath)
+        rscan = list(im.getdata())
+        size = im.size
+        encoded = base64.b64encode(bytes(rscan))
+        return "<?xml version=""1.0"" encoding=""UTF-8""?>\n<message type=""{2}"" size=""{0}"" encrypted=""False"">\n {1}\n</message>".format(size, encoded, self.messageType)
+
+    def cimage2xml(self):
+        im = Image.open(self.filePath)
+        rscan = list(im.getdata(band = 0))
+        gscan = list(im.getdata(band = 1))
+        bscan = list(im.getdata(band = 2))
+        h,v = im.size
+        size = "{0},{1}".format(h,v)
+        test = rscan + gscan + bscan
+        encoded = base64.b64encode(bytes(test))
+        return "<?xml version=""1.0"" encoding=""UTF-8""?>\n<message type=""{2}"" size=""{0}"" encrypted=""False"">\n {1}\n</message>".format(size, encoded, self.messageType)
+
+
+
+    def getXmlString(self):
+        if self.messageType == "Text":
+           return self.text2xml()
+        elif self.messageType == "GrayImage":
+            return self.image2xml()
+        elif self.messageType == "ColorImage":
+            return self.cimage2xml()
+
+    def getMessageSize(self):
+        size = len(self.XmlString)
+        if size == 0:
+            raise ValueError("No data exists!")
+        else:
+            return size
+
+    def saveToImage(self, targetImagePath):
+        if self.messageType != 'ColorImage' or self.messageType != 'GrayImage':
+            raise TypeError("Wrong type!")
+        else:
+            data_size = self.getMessageSize()
+            with open(targetImagePath, 'w') as fill:
+                fill.write(self.XmlString)
+
+    def saveToTextFile(self, targetTextFilePath):
+        if self.messageType != 'Text':
+            raise TypeError("Wrong type!")
+        else:
+            data_size = self.getMessageSize()
+            with open(targetTextFilePath, 'w') as fill:
+                fill.write(self.XmlString)
+
+    def saveToTarget(self, targetPath):
+        if self.messageType == 'Text':
+            self.saveToTextFile(targetPath)
+        elif self.messageType == 'ColorImage' or self.messageType == 'GrayImage':
+            self.saveToImage(targetPath)
+
+class Steganography:
+    directions = ['horizontal', 'vertical']
+
+    def __init__(self, imagePath, direction='horizontal'):
+        if direction not in self.directions:
+            raise ValueError('No such direction!')
+        else:
+            self.direction = direction
+        im = Image.open(imagePath)
+        mode = im.mode
+        if im.mode != 'L':
+            raise TypeError("Image must be a gray-scale Image!")
+        else:
+            self.imagePath = imagePath
+
+def embedMessageInMedium(self, message, targetImagePath):
+    pass
+
+def extractMessageFromMedium(self):
+    pass
+
+
+
+if __name__ == "__main__":
+    #one = Message(filePath='files/sunflower.png', messageType='ColorImage')
+    #print(one.XmlString)
+    two = Steganography('files/sunflower.png', 'horizontal')
