@@ -1,0 +1,82 @@
+__author__ = 'ee364g07'
+import re
+import sys
+import filecmp
+import re
+import os, math
+import glob
+from enum import Enum
+from pprint import pprint as pp
+
+class Experiment:
+    def __init__(self, experimentNo, experimentDate, virusName, unitCount, unitCost):
+        self.experimentNumber = int(experimentNo)
+        self.experimentDate = str(experimentDate)
+        self.virusName = str(virusName)
+        self.unitCount = int(unitCount)
+        self.unitCost = float(unitCost)
+        self.totalCost = float(unitCount * unitCost)
+
+    def __str__(self):
+        output = "{0:03d}, {1}, ${2:.2f}: {3}".format(self.experimentNumber, self.experimentDate, self.totalCost, self.virusName)
+        return(output)
+
+
+class Technician:
+    def __init__(self, techName, techID):
+        self.techName = str(techName)
+        self.techID = str(techID)
+        self.experiments = {}
+
+    def addExperiment(self, experiment):
+        self.experiments[experiment.experimentNumber] = experiment
+
+    def __str__(self):
+        output = "{0}, {1}: {2:02d} Experiments".format(self.techID, self.techName, len(self.experiments))
+        return(output)
+
+    def generateTechActivity(self):
+        output1 = self.techID + ", " + self.techName + " \n"
+        output2 = ["{0} \n".format(values) for values in self.experiments.values()]
+        output = "".join(output2)
+        final = output1 + output
+        return final
+
+    def loadExperimentsFromFile(self, fileName):
+        with open(fileName, "r") as eFile:
+            content = eFile.readlines()
+            lcv = 0
+            for line in content:
+                lcv+=1
+                if lcv > 2:
+                    line = line.split()
+                    help = line[4]
+                    a = help.replace("$","" )
+                    new = Experiment(line[0], line[1], line[2], int(line[3]), float(a))
+                    self.addExperiment(new)
+
+
+class Laboratory:
+    def __init__(self, labName):
+        self.labName = str(labName)
+        self.technicians = {}
+
+    def addTechnician(self, technician):
+        self.technicians[technician.techID] = technician
+
+    def __str__(self):
+        output1 = "{0}: {1:02d} Technicians\n".format(self.labName, len(self.technicians))
+        output2 = ["{0} \n".format(values) for values in self.technicians.values()]
+        output = "".join(output2)
+        final = output1 + output
+        return final
+
+
+    def generateLabActivity(self):
+        output =["{0}\n".format(value.generateTechActivity()) for value in self.technicians.values()]
+        final = "".join(output)
+        return final
+
+
+
+#if __name__ == "__main__":
