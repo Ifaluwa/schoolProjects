@@ -1,0 +1,147 @@
+import sys
+import re
+
+from PySide.QtGui import *
+from PySide.QtCore import *
+
+from EntryForm import *
+
+class EntryApplication(QMainWindow, Ui_MainWindow):
+
+    states = ["AK", "AL", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY",
+              "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND",
+              "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+
+
+    def __init__(self, parent=None):
+
+        super(EntryApplication, self).__init__(parent)
+        self.setupUi(self)
+
+        #behaviour 1
+        self.btnClear.clicked.connect(self.clear)
+
+
+        #behaviour 2
+        entryforms = [self.txtFirstName, self.txtLastName, self.txtAddress, self.txtEmail, self.txtZip, self.txtState, self.txtCity]
+        for forms in entryforms:
+            forms.textChanged.connect(self.disable)
+
+        #behaviour 3
+        self.btnSave.clicked.connect(self.save)
+
+        #behaviour 6
+        self.btnLoad.clicked.connect(self.loadData)
+
+
+    def save(self):
+        entryforms = [self.txtFirstName, self.txtLastName, self.txtAddress, self.txtEmail, self.txtZip, self.txtState, self.txtCity]
+
+        for form in entryforms:
+            if form.text() == "":
+                self.lblError.setText("Error: All entries must be populated")
+                return
+
+        if self.txtState.text() not in self.states:
+            self.lblError.setText("Error: Not a state")
+            return
+
+        match = re.search(r'\d\d\d\d\d', self.txtZip.text())
+        if match == None:
+            self.lblError.setText("Error: not a valid zip code")
+            return
+
+        match2 = re.search(r'\w+@\w+\.\w+', self.txtEmail.text())
+        if match2 == None:
+            self.lblError.setText("Error: Email is not valid!")
+            return
+        self.lblError.setText("") #clear error field
+
+        with open("target.xml", 'w') as fill:
+            fill.write("<?xml version=""1.0"" encoding=""UTF-8""?>\n")
+            fill.write("<user>\n")
+            fill.write("    <FirstName>{0}</FirstName>\n".format(self.txtFirstName.text()))
+            fill.write("    <LastName>{0}</LastName>\n".format(self.txtLastName.text()))
+            fill.write("    <Address>{0}</Address>\n".format(self.txtAddress.text()))
+            fill.write("    <City>{0}</City>\n".format(self.txtCity.text()))
+            fill.write("    <State>{0}</State>\n".format(self.txtState.text()))
+            fill.write("    <ZIP>{0}</ZIP>\n".format(self.txtZip.text()))
+            fill.write("    <Email>{0}</Email>\n".format(self.txtEmail.text()))
+            fill.write("</user>\n")
+
+    def clear(self):
+        self.txtFirstName.setText("")
+        self.txtLastName.setText("")
+        self.txtAddress.setText("")
+        self.txtCity.setText("")
+        self.txtState.setText("")
+        self.txtZip.setText("")
+        self.txtEmail.setText("")
+        self.lblError.setText("")
+        self.btnLoad.setEnabled(True)
+
+    def disable(self):
+        self.btnSave.setEnabled(True)
+        self.btnLoad.setEnabled(False)
+
+    def loadFromXmlFile(self, filePath):
+        """
+        Handling the loading of the data from the given file name. This method should only be  invoked by the
+        'loadData' method.
+        """
+        with open(filePath) as bFile:
+            content = bFile.read()
+            match = (re.search(r"<FirstName>(\w+)</FirstName>", content))
+            if match:
+                self.txtFirstName.setText(match.group(1))
+
+            match2 = (re.search(r"<LastName>(\w+)</LastName>", content))
+            if match2:
+                self.txtLastName.setText(match2.group(1))
+
+            match3 = (re.search(r"<Address>([\w\s\.]*?)</Address>", content))
+            if match3:
+                self.txtAddress.setText(match3.group(1))
+
+            match4 = (re.search(r"<City>([\w\s\.]*?)</City>", content))
+            if match4:
+                self.txtCity.setText(match4.group(1))
+
+            match5 = (re.search(r"<State>(\w+)</State>", content))
+            if match5:
+                self.txtState.setText(match5.group(1))
+
+
+            match6 = (re.search(r"<ZIP>(\d+)</ZIP>", content))
+            if match6:
+                self.txtZip.setText(match6.group(1))
+
+
+            match7 = (re.search(r"<Email>(\w+@\w+\.\w+)</Email>", content))
+            if match7:
+                self.txtEmail.setText(match7.group(1))
+
+        self.disable()
+
+
+    def loadData(self):
+        """
+        Obtain a file name from a file dialog, and pass it on to the loading method. This is to facilitate automated
+        testing. Invoke this method when clicking on the 'load' button.
+
+        *** DO NOT MODIFY THIS METHOD, OR THE TEST WILL NOT PASS! ***
+        """
+        filePath, _ = QFileDialog.getOpenFileName(self, caption='Open XML file ...', filter="XML files (*.xml)")
+
+        if not filePath:
+            return
+
+        self.loadFromXmlFile(filePath)
+
+
+if __name__ == "__main__":
+    currentApp = QApplication(sys.argv)
+    currentForm = EntryApplication()
+
+    currentForm.show()
+    currentApp.exec_()
