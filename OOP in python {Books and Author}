@@ -1,0 +1,78 @@
+__author__ = 'ee364g07'
+import re
+import sys
+import filecmp
+import re
+import os, math
+import glob
+from enum import Enum
+from pprint import pprint as pp
+
+def convertToAttrib():
+    with open('points.xml', 'r') as files:
+        files = files.readlines()
+        point = [re.search(r'<ID>(.*)</ID>', file) for file in files]
+        abscissa = [re.search(r'\s(-|[0-9]).*', file) for file in files]
+        oordinate = [re.search(r'<Y>(.*)</Y>', file) for file in files]
+        lopoints = [points.group(1) for points in point if points != None]
+        labscissa = [x.group() for x in abscissa if x != None]
+        loordinate = [y.group(1) for y in oordinate if y != None]
+        filer = open("points_out.xml", 'w')
+        lcv = 0
+        for values in lopoints:
+            strr = ("<point ID=" + values + " X="+labscissa[lcv]+" Y="+loordinate[lcv])
+            filer.write(strr)
+            lcv+=1
+
+
+def readBooks():
+    with open("books.xml", "r") as bFile:
+        content = bFile.read()
+    return content
+
+def getGenres():
+     content = readBooks()
+     matchObject = set(re.findall(r"<genre>(.*)</genre>", content))
+     genres = list(matchObject)
+     genres.sort()
+     return genres
+
+def getAuthorOf(title):
+    content = readBooks()
+    pat = r"<author>(.*?)</author>(.*?)<title>(.*?)</title>"
+    matchObject = set(re.findall(pat, content, re.DOTALL))
+    bookDictionary = {title: author for author, _, title in matchObject}
+    return bookDictionary[title]
+
+
+def getBookInfo(ID):
+    content = readBooks()
+    pat = r'<book id="(.*?)">.*?<author>(.*?)</author>(.*?)<title>(.*?)</title>'
+    matchObject = set(re.findall(pat, content, re.DOTALL))
+    IDdictionary = {ID: (title, author) for ID, author, _, title in matchObject}
+    return IDdictionary[ID]
+
+
+def getBooksBy(aname):
+    content = readBooks()
+    pat = r'</author>.*?<title>(.*?)</title>'
+    matchObject = re.findall(aname + pat, content, re.DOTALL)
+    return matchObject
+
+def getBooksBelow(price):
+    content = readBooks()
+    pat = r'<title>(.*?)</title>.*?<price>(.*?)</price>'
+    matchObject = set(re.findall(pat, content, re.DOTALL))
+    pricedictionary = {title: price for title, price in matchObject}
+    result = [keys for keys, values in pricedictionary.items() if float(values) < price]
+    return(result)
+
+def searchForWord(word):
+    pass
+
+if __name__ == "__main__":
+    #convertToAttrib()
+    #getAuthorOf("Midnight Rain")
+    #getBookInfo("bk102")
+    #getBooksBy("Randall, Cynthia")
+    #getBooksBelow(5.00)
